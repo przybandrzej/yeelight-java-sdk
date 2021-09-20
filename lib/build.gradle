@@ -7,6 +7,7 @@ plugins {
 group 'pl.przybysz.yeelight_sdk'
 version = '0.0.1'
 sourceCompatibility = 1.8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     // Use Maven Central for resolving dependencies.

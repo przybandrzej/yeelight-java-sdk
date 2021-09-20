@@ -1,12 +1,12 @@
-package pl.przybysz.yeelight_sdk.command;
+package pl.przybysz.yeelight_sdk;
 
 import com.google.gson.annotations.Expose;
-import pl.przybysz.yeelight_sdk.utils.YeelightUtils;
+import pl.przybysz.yeelight_sdk.utils.Utils;
 
 /**
  * Represent a command sent to Yeelight device
  */
-public class YeelightCommand {
+public class Command {
     /**
      * For unique ID generation
      */
@@ -14,15 +14,15 @@ public class YeelightCommand {
     /**
      * Command ID
      */
-    @Expose private final int id;
+    @Expose private int id;
     /**
      * Command method
      */
-    @Expose private final String method;
+    @Expose private String method;
     /**
      * Command parameters
      */
-    @Expose private final Object[] params;
+    @Expose private Object[] params;
 
     /**
      * Generate ID for a command
@@ -37,8 +37,8 @@ public class YeelightCommand {
      * @param method Associated method
      * @param params Associated parameters
      */
-    public YeelightCommand(String method, Object... params) {
-        this.id = YeelightCommand.generateId();
+    public Command(String method, Object... params) {
+        this.id = Command.generateId();
         this.method = method;
         this.params = params;
     }
@@ -56,6 +56,14 @@ public class YeelightCommand {
      * @return JSON string representation of this command
      */
     public String toJson() {
-        return YeelightUtils.GSON.toJson(this);
+        return Utils.GSON.toJson(this);
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public Object[] getParams() {
+        return params;
     }
 }
