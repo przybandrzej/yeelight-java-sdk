@@ -3,6 +3,7 @@ package pl.przybysz.yeelight_sdk;
 import pl.przybysz.yeelight_sdk.exception.BadResponseException;
 import pl.przybysz.yeelight_sdk.exception.SocketClosedException;
 import pl.przybysz.yeelight_sdk.exception.UnknownPacketException;
+import pl.przybysz.yeelight_sdk.utils.Utils;
 
 import java.io.IOException;
 import java.net.*;
@@ -76,7 +77,7 @@ public class Discover {
     device.setColorTemperature(getCT(lines));
     device.setHue(getHue(lines));
     device.setModel(getModel(lines));
-    device.setName(getName(lines));
+    device.setName(Utils.decodeName(getName(lines)));
     device.setPower(getPowerOn(lines));
     device.setRgb(getRgb(lines));
     device.setFirmwareVersion(getFwVer(lines));

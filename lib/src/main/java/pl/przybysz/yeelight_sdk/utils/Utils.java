@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 /**
@@ -50,6 +52,14 @@ public class Utils {
     g = clamp(g, 0, 255);
     b = clamp(b, 0, 255);
     return r * 65536 + g * 256 + b;
+  }
+
+  public static String decodeName(String encoded) {
+    return new String(Base64.getDecoder().decode(encoded.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+  }
+
+  public static String encodeName(String name) {
+    return new String(Base64.getEncoder().encode(name.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
   }
 
   public static String[] PROPERTIES = {"power", "bright", "ct", "rgb", "hue", "sat", "color_mode", "flowing",

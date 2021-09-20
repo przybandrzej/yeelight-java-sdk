@@ -1,18 +1,14 @@
 package pl.przybysz.yeelight_sdk;
 
-import pl.przybysz.yeelight_sdk.exception.ColorModeException;
-import pl.przybysz.yeelight_sdk.exception.DeviceMonoOnlyException;
 import pl.przybysz.yeelight_sdk.exception.OutOfRangeException;
 import pl.przybysz.yeelight_sdk.utils.Utils;
 
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -21,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * commands per minute (4 × 60 × 60%).
  */
 public class DeviceControl {
+  //todo implement music mode
 
   private static final int BRIGHT_MIN = 1;
   private static final int BRIGHT_MAX = 100;
@@ -30,7 +27,12 @@ public class DeviceControl {
   private static final int SATURATION_MAX = 100;
   private static final int NAME_MAX_BYES = 64;
   private static final int SOCKET_TIMEOUT = 5000;
-  private static final long LISTEN_FOR_NOTIFICATIONS_RATE = 100;
+  private static final int COLOR_TEMPERATURE_MIN = 1700;
+  private static final int COLOR_TEMPERATURE_MAX = 6500;
+  private static final int RGB_MIN = 1;
+  private static final int RGB_MAX = 16777215;
+  private static final int PERCENTAGE_MIN = -100;
+  private static final int PERCENTAGE_MAX = 100;
 
   private final Device device;
   private Socket socket;
@@ -39,11 +41,10 @@ public class DeviceControl {
   private YeelightEffect effect = YeelightEffect.SUDDEN;
   private int duration = 0;
   private Runnable onNotification = () -> {
-    System.out.println("Callback");
   };
-  private Map<Integer, CommandResult> resultMap = new ConcurrentHashMap<>();
+  private final Map<Integer, CommandResult> resultMap = new ConcurrentHashMap<>();
   private Thread listeningThread;
-  private AtomicBoolean listeningThreadRun = new AtomicBoolean(false);
+  private final AtomicBoolean listeningThreadRun = new AtomicBoolean(false);
 
   public DeviceControl(Device device) throws IOException {
     this.device = device;
@@ -76,130 +77,168 @@ public class DeviceControl {
     this.onNotification = r;
   }
 
-  public void close() throws IOException, InterruptedException {
-    //this.scheduledExecutorService.shutdown();
+  public void close() throws IOException {
     this.listeningThreadRun.set(false);
-    System.out.println("Closing thread");
-    //this.listeningThread.join();
-    //System.out.println("Closed");
     this.listeningThread.interrupt();
-    this.listeningThread.join();
     this.socket.close();
     this.socketReader.close();
     this.socketWriter.close();
   }
 
-  public void setBrightness(int brightness) throws OutOfRangeException {
+  public void adjustBrightness(int percentage, boolean awaitResponse) throws OutOfRangeException, IOException {
+    if(!inRange(percentage, PERCENTAGE_MIN, PERCENTAGE_MAX)) {
+      throw new OutOfRangeException();
+    }
+    Command command = new Command("adjust_bright", percentage, duration);
+    sendCommand(command);
+    if(awaitResponse) {
+      awaitAnswer(command);
+    }
+  }
+
+  public void adjustColorTemperature(int percentage, boolean awaitResponse) throws OutOfRangeException, IOException {
+    if(!inRange(percentage, PERCENTAGE_MIN, PERCENTAGE_MAX)) {
+      throw new OutOfRangeException();
+    }
+    Command command = new Command("adjust_ct", percentage, duration);
+    sendCommand(command);
+    if(awaitResponse) {
+      awaitAnswer(command);
+    }
+  }
+
+  public void adjustColor(int percentage, boolean awaitResponse) throws OutOfRangeException, IOException {
+    if(!inRange(percentage, PERCENTAGE_MIN, PERCENTAGE_MAX)) {
+      throw new OutOfRangeException();
+    }
+    Command command = new Command("adjust_color", percentage, duration);
+    sendCommand(command);
+    if(awaitResponse) {
+      awaitAnswer(command);
+    }
+  }
+
+  public void toggle() throws IOException {
+    Command command = new Command("toggle");
+    sendCommand(command);
+    awaitAnswer(command);
+  }
+
+  public void setBrightness(int brightness, boolean awaitResponse) throws OutOfRangeException, IOException {
     if(!inRange(brightness, BRIGHT_MIN, BRIGHT_MAX)) {
       throw new OutOfRangeException();
     }
-
-    device.setBrightness(brightness);
-  }
-
-  public void setColorMode(ColorMode mode) throws DeviceMonoOnlyException {
-    if(device.getModel() == Model.MONO) {
-      throw new DeviceMonoOnlyException();
+    Command command = new Command("set_bright", brightness, effect.getValue(), duration);
+    sendCommand(command);
+    if(awaitResponse && Boolean.TRUE.equals(awaitAnswer(command).getOk())) {
+      device.setBrightness(brightness);
     }
-
-    device.setColorMode(mode);
   }
 
-  public boolean setPower(boolean power) throws IOException {
+  public void setPower(boolean power, boolean awaitResponse) throws IOException {
     if(device.isPower() == power) {
-      return false;
+      return;
     }
-
     Command command = new Command("set_power", power ? "on" : "off");
     sendCommand(command);
-    boolean set = awaitAnswer(command);
-    if(set) {
+    if(awaitResponse && Boolean.TRUE.equals(awaitAnswer(command).getOk())) {
       device.setPower(power);
     }
-    return set;
   }
 
-  public void setColorTemp(int value) throws ColorModeException {
-    if(device.getColorMode() != ColorMode.TEMPERATURE) {
-      throw new ColorModeException();
+  public void setColorTemperature(int value, boolean awaitResponse) throws IOException, OutOfRangeException {
+    if(!inRange(value, COLOR_TEMPERATURE_MIN, COLOR_TEMPERATURE_MAX)) {
+      throw new OutOfRangeException();
     }
-
-    device.setColorTemperature(value);
+    Command command = new Command("set_ct_abx", value, effect.getValue(), duration);
+    sendCommand(command);
+    if(awaitResponse && Boolean.TRUE.equals(awaitAnswer(command).getOk())) {
+      device.setColorTemperature(value);
+    }
   }
 
-  public void setRgb(int rgb) throws ColorModeException {
-    if(device.getColorMode() != ColorMode.COLOR) {
-      throw new ColorModeException();
+  public void setRgb(int r, int g, int b, boolean awaitResponse) throws OutOfRangeException, IOException {
+    int rgb = Utils.clampAndComputeRGBValue(r, g, b);
+    if(!inRange(rgb, RGB_MIN, RGB_MAX)) {
+      throw new OutOfRangeException();
     }
-
-    device.setRgb(rgb);
+    Command command = new Command("set_rgb", rgb, effect.getValue(), duration);
+    sendCommand(command);
+    if(awaitResponse && Boolean.TRUE.equals(awaitAnswer(command).getOk())) {
+      device.setRgb(rgb);
+    }
   }
 
-  public void setHue(int hue) throws OutOfRangeException, ColorModeException {
-    if(device.getColorMode() != ColorMode.HSV) {
-      throw new ColorModeException();
-    }
+  public void setHue(int hue, boolean awaitResponse) throws OutOfRangeException, IOException {
     if(!inRange(hue, HUE_MIN, HUE_MAX)) {
       throw new OutOfRangeException();
     }
-
-    device.setHue(hue);
+    Command command = new Command("set_hue", hue, effect.getValue(), duration);
+    sendCommand(command);
+    if(awaitResponse && Boolean.TRUE.equals(awaitAnswer(command).getOk())) {
+      device.setHue(hue);
+    }
   }
 
-  public void setSaturation(int sat) throws OutOfRangeException, ColorModeException {
-    if(device.getColorMode() != ColorMode.HSV) {
-      throw new ColorModeException();
-    }
+  public void setSaturation(int sat, boolean awaitResponse) throws OutOfRangeException, IOException {
     if(!inRange(sat, SATURATION_MIN, SATURATION_MAX)) {
       throw new OutOfRangeException();
     }
-
-    device.setSaturation(sat);
+    Command command = new Command("set_sat", sat, effect.getValue(), duration);
+    sendCommand(command);
+    if(awaitResponse && Boolean.TRUE.equals(awaitAnswer(command).getOk())) {
+      device.setSaturation(sat);
+    }
   }
 
-  public void setHsv(int hue, int saturation) throws ColorModeException, OutOfRangeException {
-    if(device.getColorMode() != ColorMode.HSV) {
-      throw new ColorModeException();
-    }
+  public void setHsv(int hue, int saturation, boolean awaitResponse) throws OutOfRangeException, IOException {
     if(!inRange(saturation, SATURATION_MIN, SATURATION_MAX)) {
       throw new OutOfRangeException();
     }
     if(!inRange(hue, HUE_MIN, HUE_MAX)) {
       throw new OutOfRangeException();
     }
-
-    device.setHue(hue);
-    device.setSaturation(saturation);
+    Command command = new Command("set_hsv", hue, saturation, effect.getValue(), duration);
+    sendCommand(command);
+    if(awaitResponse && Boolean.TRUE.equals(awaitAnswer(command).getOk())) {
+      device.setHue(hue);
+      device.setSaturation(saturation);
+    }
   }
 
-  public boolean setName(String name) throws OutOfRangeException, IOException {
-    System.out.println("Calling set name " + name);
-    String encodedName = new String(Base64.getEncoder().encode(name.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-    System.out.println("Encoded : " + encodedName);
+  public void setName(String name, boolean awaitResponse) throws OutOfRangeException, IOException {
+    String encodedName = Utils.encodeName(name);
     if(encodedName.getBytes().length > NAME_MAX_BYES) {
       throw new OutOfRangeException();
     }
     Command command = new Command("set_name", encodedName);
     sendCommand(command);
-    boolean ok = awaitAnswer(command);
-    if(ok) {
+    if(awaitResponse && Boolean.TRUE.equals(awaitAnswer(command).getOk())) {
       device.setName(name);
     }
-    return ok;
   }
 
-  private boolean awaitAnswer(Command command) {
+  public void setCurrentSettingsDefault(boolean awaitResponse) throws IOException {
+    Command command = new Command("set_default");
+    sendCommand(command);
+    if(awaitResponse) {
+      awaitAnswer(command);
+    }
+  }
+
+  private CommandResult awaitAnswer(Command command) {
     do {
       CommandResult commandResult = resultMap.get(command.getId());
       if(commandResult != null) {
         resultMap.remove(command.getId());
-        return commandResult.getOk();
+        return commandResult;
       }
     } while(true);
   }
 
   public CommandResult getProperties() {
-    return new CommandResult();
+    //todo
+    throw new RuntimeException("Not implemented.");
   }
 
   public void sendCommand(Command command) throws IOException {
@@ -285,16 +324,6 @@ public class DeviceControl {
     resultMap.put(id, commandResult);
   }
 
-  /*private CommandResult readUntilResult(Command command) throws IOException {
-    do {
-      CommandResult commandResult = resultMap.get(command.getId());
-      if(commandResult != null) {
-        return commandResult;
-      }
-      this.listen();
-    } while(true);
-  }*/
-
   private void send(String data) throws IOException {
     System.out.println("sending : " + data);
     this.socketWriter.write(data);
@@ -308,29 +337,29 @@ public class DeviceControl {
       return;
     }
     System.out.println(result);
-    Map<String, String> props = (Map<String, String>) result.get("params");
+    Map<String, Object> props = (Map<String, Object>) result.get("params");
     setProps(props);
   }
 
-  private void setProps(Map<String, String> props) {
-    for(Map.Entry<String, String> property : props.entrySet()) {
+  private void setProps(Map<String, Object> props) {
+    for(Map.Entry<String, Object> property : props.entrySet()) {
       String prop = property.getKey();
       if(prop.equals("name")) {
-        device.setName(property.getValue());
+        device.setName(Utils.decodeName(property.getValue().toString()));
       } else if(prop.equals("power")) {
-        device.setPower(property.getValue().equals("on"));
+        device.setPower(property.getValue().toString().equals("on"));
       } else if(prop.equals("bright")) {
-        device.setBrightness(Integer.parseInt(property.getValue()));
+        device.setBrightness((int) Double.parseDouble(property.getValue().toString()));
       } else if(prop.equals("ct")) {
-        device.setColorTemperature(Integer.parseInt(property.getValue()));
+        device.setColorTemperature((int) Double.parseDouble(property.getValue().toString()));
       } else if(prop.equals("rgb")) {
-        device.setRgb(Integer.parseInt(property.getValue()));
+        device.setRgb(Integer.parseInt(property.getValue().toString()));
       } else if(prop.equals("hue")) {
-        device.setHue(Integer.parseInt(property.getValue()));
+        device.setHue(Integer.parseInt(property.getValue().toString()));
       } else if(prop.equals("sat")) {
-        device.setSaturation(Integer.parseInt(property.getValue()));
+        device.setSaturation(Integer.parseInt(property.getValue().toString()));
       } else if(prop.equals("color_mode")) {
-        device.setColorMode(ColorMode.valueOf(Integer.parseInt(property.getValue())));
+        device.setColorMode(ColorMode.valueOf((int) Double.parseDouble(property.getValue().toString())));
       } else if(prop.equals("flowing")) {
 
       } else if(prop.equals("delayoff")) {
