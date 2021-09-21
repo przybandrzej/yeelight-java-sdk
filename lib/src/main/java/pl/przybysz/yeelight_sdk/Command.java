@@ -51,14 +51,6 @@ public class Command {
         return this.id;
     }
 
-    /**
-     * Convert this command to JSON string
-     * @return JSON string representation of this command
-     */
-    public String toJson() {
-        return Utils.GSON.toJson(this);
-    }
-
     public String getMethod() {
         return method;
     }

@@ -13,17 +13,7 @@ import java.util.Map;
  * Yeelight utility class
  */
 public class Utils {
-  /**
-   * Gson constant (for JSON reading/writing)
-   */
-  public static Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().disableHtmlEscaping().create();
 
-  public static Type MAP_TYPE_TOKEN = new TypeToken<Map<String, Object>>() {
-  }.getType();
-
-  /**
-   * Utility class: can not be instanciated
-   */
   private Utils() {
   }
 

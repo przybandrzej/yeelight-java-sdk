@@ -1,9 +1,13 @@
 package pl.przybysz.yeelight_sdk;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import pl.przybysz.yeelight_sdk.exception.OutOfRangeException;
 import pl.przybysz.yeelight_sdk.utils.Utils;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.List;
@@ -33,6 +37,10 @@ public class DeviceControl {
   private static final int RGB_MAX = 16777215;
   private static final int PERCENTAGE_MIN = -100;
   private static final int PERCENTAGE_MAX = 100;
+
+  private final Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().disableHtmlEscaping().create();
+  private final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, Object>>() {
+  }.getType();
 
   private final Device device;
   private Socket socket;
@@ -242,7 +250,7 @@ public class DeviceControl {
   }
 
   public void sendCommand(Command command) throws IOException {
-    String jsonCommand = command.toJson() + "\r\n";
+    String jsonCommand = this.GSON.toJson(command) + "\r\n";
     send(jsonCommand);
   }
 
@@ -281,7 +289,7 @@ public class DeviceControl {
       return;
     }
     System.out.println(data);
-    Map<String, Object> result = Utils.GSON.fromJson(data, Utils.MAP_TYPE_TOKEN);
+    Map<String, Object> result = GSON.fromJson(data, MAP_TYPE_TOKEN);
     Object idObj = result.get("id");
     if(idObj == null) {
       processNotification(result);
