@@ -1,6 +1,7 @@
 package pl.przybysz.yeelight_sdk;
 
 import pl.przybysz.yeelight_sdk.exception.BadResponseException;
+import pl.przybysz.yeelight_sdk.exception.SearchTimeoutException;
 import pl.przybysz.yeelight_sdk.exception.SocketClosedException;
 import pl.przybysz.yeelight_sdk.exception.UnknownPacketException;
 import pl.przybysz.yeelight_sdk.utils.Utils;
@@ -40,17 +41,22 @@ public class Discover {
     udpSocket.send(packet);
   }
 
-  public Device receiveSearchPacket() throws SocketClosedException, IOException, UnknownPacketException, BadResponseException {
+  public Device receiveSearchPacket() throws SocketClosedException, IOException, UnknownPacketException, BadResponseException, SearchTimeoutException {
     return receiveSearchPacket(TIMEOUT);
   }
 
-  public Device receiveSearchPacket(int timeout) throws SocketClosedException, IOException, UnknownPacketException, BadResponseException {
+  public Device receiveSearchPacket(int timeout) throws SocketClosedException, IOException, UnknownPacketException, BadResponseException, SearchTimeoutException {
     if(udpSocket.isClosed()) {
       throw new SocketClosedException();
     }
     DatagramPacket packet = new DatagramPacket(new byte[2048], 2048);
     udpSocket.setSoTimeout(timeout);
-    udpSocket.receive(packet);
+    try {
+      udpSocket.receive(packet);
+    }
+    catch(SocketTimeoutException e) {
+      throw new SearchTimeoutException();
+    }
     String data = new String(
         packet.getData(), 0, packet.getLength());
     return mapSearchResponse(data);
