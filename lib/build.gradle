@@ -43,13 +43,13 @@ tasks.withType(Sign) {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            groupId 'io.github.przyband'
-            artifact 'yeelight-sdk'
+            groupId 'io.github.przybandrzej'
+            artifactId 'yeelight-java-sdk'
             from components.java
             pom {
                 name = 'Yeelight Java SDK'
                 description = 'SDK for communicating with Yeelight devices'
-                url = 'https://example.com/'
+                url = 'https://github.com/przybandrzej/yeelight-java-sdk'
                 licenses {
                     license {
                         name = 'The Apache License, Version 2.0'
@@ -75,8 +75,8 @@ publishing {
 
     repositories {
         maven {
-            def releaseRepo = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-            def snapshotRepo = "https://oss.sonatype.org/content/repositories/snapshots/"
+            def releaseRepo = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotRepo = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
             url = isReleaseVersion ? releaseRepo : snapshotRepo
             credentials {
                 username = project.hasProperty('ossrhUsername') ? ossrhUsername : "Unknown user"
