@@ -1,7 +1,7 @@
-
 plugins {
-    // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
+    id 'maven-publish'
+    id 'signing'
 }
 
 group 'pl.przybysz.yeelight_sdk'
@@ -10,24 +10,16 @@ sourceCompatibility = 1.8
 targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
-    // Use Maven Central for resolving dependencies.
     mavenCentral()
 }
 
 ext {
     GSON_V = '2.8.8'
+    isReleaseVersion = true
 }
 
 dependencies {
-    // Use JUnit Jupiter for testing.
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
-
     implementation "com.google.code.gson:gson:$GSON_V"
-}
-
-tasks.named('test') {
-    // Use JUnit Platform for unit tests.
-    useJUnitPlatform()
 }
 
 tasks.named('jar') {
@@ -40,4 +32,61 @@ tasks.named('jar') {
 java {
     withSourcesJar()
     withJavadocJar()
+}
+
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+tasks.withType(Sign) {
+    onlyIf { isReleaseVersion }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId 'io.github.przyband'
+            artifact 'yeelight-sdk'
+            from components.java
+            pom {
+                name = 'Yeelight Java SDK'
+                description = 'SDK for communicating with Yeelight devices'
+                url = 'https://example.com/'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/przybandrzej/yeelight-java-sdk.git'
+                    developerConnection = 'scm:git:git@github.com:przyband/yeelight-java-sdk.git'
+                    url = 'https://github.com/przybandrzej/yeelight-java-sdk'
+                }
+
+                developers {
+                    developer {
+                        id = 'przybandrzej'
+                        name = 'Andrzej Przybysz'
+                        email = 'andrzej.przybysz01@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            def releaseRepo = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotRepo = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = isReleaseVersion ? releaseRepo : snapshotRepo
+            credentials {
+                username = project.hasProperty('ossrhUsername') ? ossrhUsername : "Unknown user"
+                password = project.hasProperty('ossrhPassword') ? ossrhPassword : "Unknown password"
+            }
+        }
+    }
+}
+
+signing {
+    required { isReleaseVersion && gradle.taskGraph.hasTask("publish") }
+    sign publishing.publications.mavenJava
 }

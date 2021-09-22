@@ -5,3 +5,5 @@
 lib/build
 
 .idea
+
+gradle.properties
