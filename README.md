@@ -5,7 +5,7 @@ SDK for Java apps to communicate with Yeelight devices.
 ### Gradle
   `implementation 'io.github.przybandrzej:yeelight-java-sdk:0.1.0'`
 ### Maven
-  ```
+  ```xml
   <dependency>
     <groupId>io.github.przybandrzej</groupId>
     <artifactId>yeelight-java-sdk</artifactId>
@@ -34,3 +34,9 @@ SDK for Java apps to communicate with Yeelight devices.
 
 ### Control a device
 
+
+## Author
+**Andrzej Przybysz**  
+**Email:** andrzej.przybysz01@gmail.com  
+**Github:** [przybandrzej](https://github.com/przybandrzej)  
+**LinkedIn:** [Andrzej Przybysz](https://www.linkedin.com/in/andrzej-przybysz/)  
