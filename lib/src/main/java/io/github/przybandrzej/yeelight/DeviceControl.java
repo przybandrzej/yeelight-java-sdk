@@ -86,7 +86,7 @@ public class DeviceControl {
     this.onNotification = r;
   }
 
-  public void close() throws IOException {
+  public void disconnect() throws IOException {
     this.listeningThreadRun.set(false);
     this.listeningThread.interrupt();
     this.socket.close();
