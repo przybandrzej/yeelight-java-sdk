@@ -33,7 +33,16 @@ SDK for Java apps to communicate with Yeelight devices.
   
 
 ### Control a device
-
+```java
+DeviceControl ctrl = new DeviceControl(device);
+ctrl.onDeviceStateChange(() -> {
+  System.out.println("Callback for when a device has received an update.");
+});
+ctrl.setPower(true, false);
+ctrl.setColorTemperature(1800, false);
+ctrl.adjustBrightness(-50, false);
+ctrl.close();
+```
 
 ## Author
 **Andrzej Przybysz**  
