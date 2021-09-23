@@ -1,13 +1,7 @@
-package pl.przybysz.yeelight_sdk.utils;
+package io.github.przybandrzej.yeelight.utils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Map;
 
 /**
  * Yeelight utility class

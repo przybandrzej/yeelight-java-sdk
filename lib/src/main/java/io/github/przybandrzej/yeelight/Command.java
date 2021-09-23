@@ -1,7 +1,6 @@
-package pl.przybysz.yeelight_sdk;
+package io.github.przybandrzej.yeelight;
 
 import com.google.gson.annotations.Expose;
-import pl.przybysz.yeelight_sdk.utils.Utils;
 
 /**
  * Represent a command sent to Yeelight device

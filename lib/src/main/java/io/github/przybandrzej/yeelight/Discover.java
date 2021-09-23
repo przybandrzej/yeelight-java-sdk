@@ -1,10 +1,11 @@
-package pl.przybysz.yeelight_sdk;
+package io.github.przybandrzej.yeelight;
 
-import pl.przybysz.yeelight_sdk.exception.BadResponseException;
-import pl.przybysz.yeelight_sdk.exception.SearchTimeoutException;
-import pl.przybysz.yeelight_sdk.exception.SocketClosedException;
-import pl.przybysz.yeelight_sdk.exception.UnknownPacketException;
-import pl.przybysz.yeelight_sdk.utils.Utils;
+
+import io.github.przybandrzej.yeelight.exception.BadResponseException;
+import io.github.przybandrzej.yeelight.exception.SearchTimeoutException;
+import io.github.przybandrzej.yeelight.exception.SocketClosedException;
+import io.github.przybandrzej.yeelight.exception.UnknownPacketException;
+import io.github.przybandrzej.yeelight.utils.Utils;
 
 import java.io.IOException;
 import java.net.*;

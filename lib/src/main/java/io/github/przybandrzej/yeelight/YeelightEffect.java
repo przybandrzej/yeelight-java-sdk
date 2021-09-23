@@ -1,4 +1,4 @@
-package pl.przybysz.yeelight_sdk;
+package io.github.przybandrzej.yeelight;
 
 /**
  * Enumeration for transition effect

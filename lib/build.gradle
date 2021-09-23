@@ -4,8 +4,7 @@ plugins {
     id 'signing'
 }
 
-group 'pl.przybysz.yeelight_sdk'
-version = '0.1.0'
+version = '0.1.2'
 sourceCompatibility = 1.8
 targetCompatibility = JavaVersion.VERSION_1_8
 

@@ -1,10 +1,10 @@
-package pl.przybysz.yeelight_sdk;
+package io.github.przybandrzej.yeelight;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import pl.przybysz.yeelight_sdk.exception.OutOfRangeException;
-import pl.przybysz.yeelight_sdk.utils.Utils;
+import io.github.przybandrzej.yeelight.exception.OutOfRangeException;
+import io.github.przybandrzej.yeelight.utils.Utils;
 
 import java.io.*;
 import java.lang.reflect.Type;

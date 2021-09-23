@@ -1,4 +1,4 @@
-package pl.przybysz.yeelight_sdk.exception;
+package io.github.przybandrzej.yeelight.exception;
 
 public class SocketClosedException extends Exception {
 }
